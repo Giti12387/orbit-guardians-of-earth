@@ -86,9 +86,10 @@ export function MainMenu() {
               <p className="mt-2 font-[Orbitron] text-[11px] tracking-[0.18em] text-cyan/90">BEYOND EARTH. INTO THE UNKNOWN.</p>
               <p className="mt-4 text-sm leading-6 text-text-muted">A cinematic space exploration and Earth observation mission experience with real scientific purpose.</p>
               <div className="mt-5 flex flex-col gap-2">
-                <Button variant="primary" className="w-full justify-center py-3" onClick={() => nav('/earth-guardians')}><Rocket size={16} /> Start Mission</Button>
+                <Button variant="primary" className="w-full justify-center py-3" onClick={() => nav('/play')}><Rocket size={16} /> Play Game</Button>
+                <Button variant="success" className="w-full justify-center" onClick={() => nav('/earth-guardians')}>Start Science Mission</Button>
                 {hasProgress && <Button className="w-full justify-center" onClick={() => nav(continueTo)}>Continue Mission</Button>}
-                <Button variant="success" className="w-full justify-center" onClick={() => nav('/mission/coastal-watch/briefing')}><Radar size={16} /> Mission Briefing</Button>
+                <Button className="w-full justify-center" onClick={() => nav('/mission/coastal-watch/briefing')}><Radar size={16} /> Mission Briefing</Button>
                 <div className="grid grid-cols-2 gap-2">
                   <Button onClick={() => nav('/settings')}><Settings size={16} /> Settings</Button>
                   <Button onClick={() => nav('/credits')}><Info size={16} /> Credits</Button>

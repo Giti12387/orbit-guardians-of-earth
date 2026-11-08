@@ -17,6 +17,7 @@ import { LearningCenter } from './pages/LearningCenter'
 import { Settings } from './pages/Settings'
 import { Credits } from './pages/Credits'
 import { Achievements } from './pages/Achievements'
+import { RocketFlight } from './pages/RocketFlight'
 
 export default function App() {
   const location = useLocation()
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/explore" element={<SolarSystem />} />
         <Route path="/solar-system" element={<Navigate to="/explore" replace />} />
         <Route path="/spacecraft" element={<Spacecraft />} />
+        <Route path="/play" element={<RocketFlight />} />
         <Route path="/satellite-operations" element={<SatelliteOperations />} />
         <Route path="/earth-guardians" element={<EarthGuardians />} />
         <Route path="/technology-lab" element={<TechnologyLab />} />

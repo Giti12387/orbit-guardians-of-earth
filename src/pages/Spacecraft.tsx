@@ -79,8 +79,8 @@ export function Spacecraft() {
                 {(phase === 'launch' || phase === 'travel') && <div className="mt-4"><div className="mb-1 flex justify-between text-xs text-text-muted"><span>{phase === 'launch' ? 'Launch sequence' : 'Travel progress'}</span><span>{Math.round(progress)}%</span></div><ProgressBar value={progress} tone="cyan" /></div>}
               </motion.div>
               <div className="mt-5 flex flex-wrap gap-3">
-                {phase === 'select' && <Button variant="primary" onClick={() => setPhase('launch')}><Rocket size={16}/> Launch Spacecraft</Button>}
-                {phase === 'arrival' && <><Button variant="success" onClick={() => window.location.assign(`/explore`)}>Explore Discovery</Button><Button onClick={reset}>New Flight</Button></>}
+                {phase === 'select' && <><Button variant="primary" onClick={() => setPhase('launch')}><Rocket size={16}/> Launch Spacecraft</Button><Button variant="success" onClick={() => window.location.assign('/play')}>Play Rocket Flight Game</Button></>}
+                {phase === 'arrival' && <><Button variant="success" onClick={() => window.location.assign(`/explore`)}>Explore Discovery</Button><Button onClick={reset}>New Flight</Button><Button onClick={() => window.location.assign('/play')}>Play Game</Button></>}
               </div>
             </div>
           </Panel>
