@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Award, BookOpenCheck, Compass, FlaskConical, Orbit, RotateCcw, SatelliteDish, Sparkles } from 'lucide-react'
+import { Award, BookOpenCheck, Compass, Database, FlaskConical, Orbit, RotateCcw, SatelliteDish, Sparkles } from 'lucide-react'
 import { PageShell } from '../components/layout/PageShell'
 import { Panel, HudTag } from '../components/ui/Panel'
 import { Button } from '../components/ui/Button'
 import { ProgressBar } from '../components/ui/Progress'
-import { completeMission, loadState } from '../store/gameStore'
+import { completeMission } from '../store/gameStore'
 import { coastalWatchMission, overlayMeta, type OverlayKind } from '../data/missions'
 
 type ResultState = {
@@ -30,23 +30,34 @@ export function MissionResults() {
     const score = result.score ?? correct * 340 + 80
     const xp = 150 + correct * 90
     const research = 40 + correct * 35
+    const discovery = 20 + correct * 25
     const observations = total
-    return { total, correct, accuracy, score, xp, research, observations }
+    return { total, correct, accuracy, score, xp, research, discovery, observations }
   }, [result, mission.targets.length])
 
   useEffect(() => {
     if (committed.current) return
     committed.current = true
-    const current = loadState()
     if (!result.score && !result.accuracy && !result.answers) return
-    completeMission(current, mission.id, {
+    completeMission(mission.id, {
       score: computed.score,
       accuracy: computed.accuracy,
       xp: computed.xp,
       research: computed.research,
+      discovery: computed.discovery,
       observations: computed.observations,
+      missionName: mission.title,
+      objectivesCompleted: computed.correct,
+      objectivesTotal: computed.total,
+      findings: mission.targets.map((t) => `${t.name}: ${t.explanation}`),
+      summary:
+        'Coastal Watch training completed using simulated observation overlays to practice evidence-based environmental interpretation.',
+      sources: [
+        { name: 'NASA Earthdata / Earth observation concepts (educational reference)', date: 'Accessed in demo', type: 'simulated' },
+        { name: 'Mission training overlay set (ORBIT)', date: new Date().toISOString().slice(0, 10), type: 'simulated' },
+      ],
     })
-  }, [computed, mission.id, result])
+  }, [computed, mission, result])
 
   return (
     <PageShell backTo="/" backLabel="Main Menu" className="px-4 py-14 sm:px-6 lg:px-8">
@@ -58,7 +69,7 @@ export function MissionResults() {
               <div>
                 <div className="hud-label text-success">Mission Completed</div>
                 <h1 className="mt-3 font-[Space_Grotesk] text-3xl font-semibold text-text sm:text-5xl">{mission.title} Report</h1>
-                <p className="mt-3 max-w-2xl text-text-muted">You completed a training pass in Earth observation decision-making. The report below separates your results from the scientific purpose behind each choice.</p>
+                <p className="mt-3 max-w-2xl text-text-muted">You completed an Earth observation investigation. The report below separates your results from the scientific purpose behind each choice.</p>
               </div>
               <div className="flex items-center gap-3 rounded-2xl border border-success/25 bg-success/10 px-4 py-3">
                 <Award className="text-success" size={22} />
@@ -69,13 +80,14 @@ export function MissionResults() {
               </div>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
               {[
                 { label: 'Accuracy', value: `${computed.accuracy}%`, tone: 'text-cyan', icon: <SatelliteDish size={16} className="text-cyan" /> },
                 { label: 'XP Earned', value: `+${computed.xp}`, tone: 'text-success', icon: <Sparkles size={16} className="text-success" /> },
                 { label: 'Research', value: `+${computed.research}`, tone: 'text-violet', icon: <FlaskConical size={16} className="text-violet" /> },
-                { label: 'Observations', value: `${computed.observations}`, tone: 'text-amber', icon: <Orbit size={16} className="text-amber" /> },
-                { label: 'Correct Zones', value: `${computed.correct}/${computed.total}`, tone: 'text-text', icon: <BookOpenCheck size={16} className="text-cyan" /> },
+                { label: 'Discovery', value: `+${computed.discovery}`, tone: 'text-amber', icon: <Database size={16} className="text-amber" /> },
+                { label: 'Observations', value: `${computed.observations}`, tone: 'text-cyan', icon: <Orbit size={16} className="text-cyan" /> },
+                { label: 'Objectives', value: `${computed.correct}/${computed.total}`, tone: 'text-text', icon: <BookOpenCheck size={16} className="text-cyan" /> },
               ].map((s) => (
                 <Panel key={s.label} className="bg-bg/25 p-4">
                   <div className="flex items-center justify-between"><span className="hud-label">{s.label}</span>{s.icon}</div>
@@ -121,10 +133,12 @@ export function MissionResults() {
                     <p key={t.id}><span className="text-text">{t.name}:</span> {t.explanation}</p>
                   ))}
                 </div>
-                <div className="mt-6 rounded-xl border border-cyan/20 bg-cyan/6 p-4">
-                  <div className="hud-label text-cyan">Next Mission</div>
-                  <div className="mt-2 font-[Space_Grotesk] text-lg font-semibold">Atmospheric Trace (planned)</div>
-                  <p className="mt-1 text-sm text-text-muted">Continue your training by exploring how observations can support air and climate questions.</p>
+                <div className="mt-4 rounded-xl border border-cyan/20 bg-cyan/6 p-4">
+                  <div className="hud-label text-cyan">Data Sources</div>
+                  <ul className="mt-2 space-y-1 text-sm text-text-muted">
+                    <li>NASA Earthdata / Earth observation concepts — educational reference (simulated training context).</li>
+                    <li>ORBIT training overlay set — {new Date().toISOString().slice(0, 10)} (simulated).</li>
+                  </ul>
                 </div>
               </Panel>
             </div>
@@ -132,7 +146,7 @@ export function MissionResults() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/mission/coastal-watch/briefing"><Button variant="primary"><RotateCcw size={16} /> Replay Mission</Button></Link>
               <Link to="/mission-control"><Button><Compass size={16} /> Mission Control</Button></Link>
-              <Link to="/explore"><Button>Explore Universe</Button></Link>
+              <Link to="/earth-guardians"><Button>Earth Guardians</Button></Link>
               <Link to="/"><Button>Return to Main Menu</Button></Link>
             </div>
           </Panel>
