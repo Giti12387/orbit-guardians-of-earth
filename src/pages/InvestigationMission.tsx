@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CheckCircle2, FileSearch, Send } from 'lucide-react'
 import { PageShell } from '../components/layout/PageShell'
@@ -6,6 +6,7 @@ import { Panel, HudTag } from '../components/ui/Panel'
 import { Button } from '../components/ui/Button'
 import { NasaSourceBadge } from '../components/ui/NasaSourceBadge'
 import { getInvestigationMission } from '../data/earthGuardiansMissions'
+import { fetchEonetEvents, NASA_SOURCES } from '../lib/nasaData'
 
 export function InvestigationMission() {
   const { missionId } = useParams()
@@ -14,6 +15,12 @@ export function InvestigationMission() {
   const [collected, setCollected] = useState<Record<string, boolean>>({})
   const [choice, setChoice] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [eonet, setEonet] = useState<{ state: 'loading' | 'ok' | 'error'; date?: string; events?: { id: string; title: string; categories: string[] }[]; message?: string }>({ state: 'loading' })
+  useEffect(() => {
+    const ac = new AbortController()
+    fetchEonetEvents(4, ac.signal).then((r) => setEonet(r.ok ? { state: 'ok', date: r.date, events: r.events } : { state: 'error', date: r.date, message: r.message })).catch(() => {})
+    return () => ac.abort()
+  }, [missionId])
 
   const allCollected = useMemo(() => !!m && m.evidence.every((e) => collected[e.id]), [m, collected])
   const selected = m?.options.find((o) => o.id === choice)
@@ -39,11 +46,19 @@ export function InvestigationMission() {
           <Panel className="p-5">
             <div className="hud-label">Observations & Evidence</div>
             <p className="mt-2 text-sm text-text-muted">Collect each evidence item before submitting your conclusion. Compare sources, dates, and values.</p>
+            <div className="mt-4 rounded-xl border border-cyan/20 bg-cyan/5 p-4">
+              <div className="flex items-center justify-between gap-2"><div className="hud-label">Real NASA EONET Context (Live API Check)</div><HudTag tone={eonet.state === 'ok' ? 'green' : eonet.state === 'loading' ? 'cyan' : 'amber'}>{eonet.state}</HudTag></div>
+              <p className="mt-1 text-xs text-text-muted">This panel shows live/queried NASA EONET event context when available. The mission evidence below remains a labeled training scenario.</p>
+              {eonet.state === 'loading' && <div className="mt-2 text-sm text-text-muted">Loading EONET events...</div>}
+              {eonet.state === 'ok' && <div className="mt-2 space-y-1 text-sm text-text-muted">{eonet.events?.length ? eonet.events.map(ev => <div key={ev.id}>• {ev.title} {ev.categories.length ? `(${ev.categories.join(', ')})` : ''}</div>) : <div>No open events returned in sample ({eonet.date}).</div>}</div>}
+              {eonet.state === 'error' && <div className="mt-2 text-sm text-amber">EONET unavailable: {eonet.message}. No fabricated events shown.</div>}
+              <div className="mt-2 text-[11px] text-text-muted">Source: {NASA_SOURCES.eonet.name} · Date: {eonet.date || 'n/a'} · Type: {eonet.state === 'ok' ? 'real (API response)' : 'fallback'}</div>
+            </div>
             <div className="mt-4 space-y-3">
               {m.evidence.map((e) => (
                 <div key={e.id} className={`rounded-xl border p-4 ${collected[e.id] ? 'border-success/30 bg-success/7' : 'border-white/8 bg-white/3'}`}>
                   <div className="flex items-start justify-between gap-3"><div><div className="font-semibold text-text">{e.label}</div><div className="mt-1 text-sm text-text-muted">{e.value}</div></div>{collected[e.id] ? <CheckCircle2 className="text-success" size={18} /> : <Button onClick={() => setCollected((p) => ({ ...p, [e.id]: true }))}><FileSearch size={15} /> Collect</Button>}</div>
-                  <div className="mt-2 text-xs text-text-muted">Source: {e.source} · Date: {e.date} · <span className={e.sourceType === 'simulated' ? 'text-amber' : 'text-cyan'}>{e.sourceType}</span></div>
+                  <div className="mt-2 text-xs text-text-muted">Training evidence — Source: {e.source} · Date: {e.date} · <span className={e.sourceType === 'simulated' ? 'text-amber' : 'text-cyan'}>{e.sourceType}</span></div>
                 </div>
               ))}
             </div>

@@ -21,10 +21,10 @@ export function Settings() {
           <Panel className="p-5">
             <div className="hud-label">Audio</div>
             <div className="mt-4 space-y-4 text-sm">
-              <label className="flex items-center justify-between gap-3"><span>Sound effects</span><input type="checkbox" checked={settings.soundEnabled} onChange={(e) => { setSettings({ soundEnabled: e.target.checked }); playUiTone({ ...settings, soundEnabled: true }, 'click') }} /></label>
-              <label className="flex items-center justify-between gap-3"><span>Music (ambient placeholder)</span><input type="checkbox" checked={settings.musicEnabled} onChange={(e) => setSettings({ musicEnabled: e.target.checked })} /></label>
-              <label className="block"><div className="mb-1 flex justify-between text-text-muted"><span>Volume</span><span>{Math.round(settings.volume * 100)}%</span></div><input className="w-full" type="range" min={0} max={1} step={0.05} value={settings.volume} onChange={(e) => setSettings({ volume: Number(e.target.value) })} /></label>
-              <Button onClick={() => playUiTone(settings, 'success')} disabled={!settings.soundEnabled}>Test Sound</Button>
+              <label className="flex items-center justify-between gap-3"><span>Sound effects (Web Audio tones)</span><input type="checkbox" checked={settings.soundEnabled} onChange={(e) => { setSettings({ soundEnabled: e.target.checked }); playUiTone({ ...settings, soundEnabled: true }, 'click') }} /></label>
+              <div className="rounded-xl border border-white/8 bg-white/3 p-3 text-text-muted"><span className="font-semibold text-text">Background music:</span> unavailable in this build. Only optional UI sound effects are implemented; no audio is auto-played.</div>
+              <label className="block"><div className="mb-1 flex justify-between text-text-muted"><span>Sound effect volume</span><span>{Math.round(settings.volume * 100)}%</span></div><input className="w-full" type="range" min={0} max={1} step={0.05} value={settings.volume} onChange={(e) => setSettings({ volume: Number(e.target.value) })} /></label>
+              <Button onClick={() => playUiTone(settings, 'success')} disabled={!settings.soundEnabled}>Test Sound Effect</Button>
             </div>
           </Panel>
           <Panel className="p-5">

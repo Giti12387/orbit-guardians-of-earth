@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,6 +12,7 @@ import { ProgressBar } from '../components/ui/Progress'
 import { EarthGlobe } from '../components/space/EarthGlobe'
 import { Starfield } from '../components/space/Starfield'
 import { coastalWatchMission, overlayMeta, type OverlayKind, type MissionTarget } from '../data/missions'
+import { gibsBboxFromLatLon, gibsWmsImageUrl } from '../lib/nasaData'
 
 function latLonToVec3(lat: number, lon: number, radius: number) {
   const phi = (90 - lat) * (Math.PI / 180)
@@ -70,8 +71,11 @@ export function CoastalWatchMissionPage() {
   const [answers, setAnswers] = useState<Record<string, { overlay: OverlayKind; correct: boolean }>>({})
   const [feedback, setFeedback] = useState<null | { correct: boolean }>(null)
   const [showMobileInfo, setShowMobileInfo] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
   const target = mission.targets[index]
+  const gibs = useMemo(() => gibsWmsImageUrl({ bbox: gibsBboxFromLatLon(target.lat, target.lon, 12), width: 512, height: 320 }), [target.lat, target.lon])
+  useEffect(() => { setImgError(false) }, [gibs.url])
   const foundIds = useMemo(() => Object.keys(answers).filter((id) => answers[id].correct), [answers])
   const capturedCount = Object.keys(answers).length
   const correctCount = Object.values(answers).filter((a) => a.correct).length
@@ -175,11 +179,18 @@ export function CoastalWatchMissionPage() {
               </div>
             </div>
             <div className="mt-4">
-              <div className="hud-label">Active Layer</div>
-              <div className="mt-2 rounded-xl border border-white/8 bg-white/3 p-3">
+              <div className="hud-label">Active Training Layer (Simulated)</div>
+              <div className="mt-2 rounded-xl border border-amber/20 bg-amber/5 p-3">
                 <div className="font-semibold text-text">{overlayMeta[overlay].label}</div>
-                <p className="mt-1 text-sm leading-6 text-text-muted">{overlayMeta[overlay].description}</p>
+                <p className="mt-1 text-sm leading-6 text-text-muted">{overlayMeta[overlay].description} This is a simulated training overlay, not live NASA imagery.</p>
               </div>
+            </div>
+            <div className="mt-4">
+              <div className="hud-label">NASA GIBS Archived Imagery (Real Service)</div>
+              <div className="mt-2 overflow-hidden rounded-xl border border-white/8 bg-black/25">
+                {!imgError ? <img src={gibs.url} alt={`NASA GIBS ${target.name} ${gibs.date}`} className="h-auto w-full" loading="lazy" onError={() => setImgError(true)} onLoad={() => setImgError(false)} /> : <div className="p-3 text-xs text-text-muted">GIBS imagery unavailable in this environment. Layer/date/projection request is shown for reference.</div>}
+              </div>
+              <div className="mt-1 text-[11px] text-text-muted break-all">{gibs.layer} · {gibs.date} · {gibs.projection}</div>
             </div>
             <div className="mt-4">
               <div className="hud-label">Scientific Context</div>
