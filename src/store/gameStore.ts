@@ -24,6 +24,7 @@ export interface MissionProgress {
 
 export interface MissionReport {
   id: string
+  completionId?: string
   missionId: string
   missionName: string
   completedAt: string
@@ -34,8 +35,9 @@ export interface MissionReport {
   score: number
   accuracy: number
   rewards: { xp: number; research: number; discovery: number }
-  sources: { name: string; date: string; type: 'real' | 'archived' | 'simulated' }[]
+  sources: { name: string; date: string; type: 'real' | 'archived' | 'simulated'; url?: string; note?: string }[]
   summary: string
+  detail?: Record<string, unknown>
 }
 
 export interface SettingsState {
@@ -146,9 +148,18 @@ export function unlockAchievement(state: GameState, id: string): GameState {
   return next
 }
 
+export function getReportByCompletionId(state: GameState, completionId: string) {
+  return state.reports.find((r) => r.completionId === completionId)
+}
+
+export function getLatestMissionReport(state: GameState, missionId: string) {
+  return state.reports.find((r) => r.missionId === missionId)
+}
+
 export function completeMission(
   id: string,
   result: {
+    completionId?: string
     score: number
     accuracy: number
     xp: number
@@ -160,15 +171,21 @@ export function completeMission(
     objectivesTotal: number
     findings: string[]
     summary: string
-    sources: { name: string; date: string; type: 'real' | 'archived' | 'simulated' }[]
+    sources: { name: string; date: string; type: 'real' | 'archived' | 'simulated'; url?: string; note?: string }[]
+    detail?: Record<string, unknown>
   },
-): GameState {
+): { state: GameState; report: MissionReport; awarded: boolean } {
   const state = loadState()
+  if (result.completionId) {
+    const existing = getReportByCompletionId(state, result.completionId)
+    if (existing) return { state, report: existing, awarded: false }
+  }
   const prev = state.missions[id]
   const wasCompleted = prev?.status === 'completed'
   const discovery = result.discovery ?? Math.max(10, Math.round(result.score / 20))
   const report: MissionReport = {
     id: `${id}-${Date.now()}`,
+    completionId: result.completionId,
     missionId: id,
     missionName: result.missionName,
     completedAt: new Date().toISOString(),
@@ -181,6 +198,7 @@ export function completeMission(
     rewards: { xp: result.xp, research: result.research, discovery },
     sources: result.sources,
     summary: result.summary,
+    detail: result.detail,
   }
   let next: GameState = {
     ...state,
@@ -206,18 +224,20 @@ export function completeMission(
         status: 'completed',
         score: Math.max(prev?.score ?? 0, result.score),
         accuracy: Math.max(prev?.accuracy ?? 0, result.accuracy),
-        completedAt: new Date().toISOString(),
+        completedAt: report.completedAt,
         reportId: report.id,
       },
     },
     reports: [report, ...state.reports].slice(0, 30),
     lastMissionId: id,
   }
-  if (next.profile.missionsCompleted >= 1) next = unlockAchievement(next, 'first-orbit')
-  if (result.accuracy >= 100) next = unlockAchievement(next, 'perfect-scan')
-  if (next.profile.missionsCompleted >= 5) next = unlockAchievement(next, 'earth-guardian')
+  const ach = new Set(next.achievements)
+  if (next.profile.missionsCompleted >= 1) ach.add('first-orbit')
+  if (result.accuracy >= 100) ach.add('perfect-scan')
+  if (next.profile.missionsCompleted >= 5) ach.add('earth-guardian')
+  next = { ...next, achievements: [...ach] }
   saveState(next)
-  return next
+  return { state: next, report, awarded: true }
 }
 
 export function resetProgress() {

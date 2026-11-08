@@ -93,8 +93,10 @@ export function CoastalWatchMissionPage() {
     } else {
       const accuracy = Math.round((correctCount / mission.targets.length) * 100)
       const score = correctCount * 340 + 80
+      const completionId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
       nav('/mission/coastal-watch/results', {
         state: {
+          completionId,
           score,
           accuracy,
           correct: correctCount,

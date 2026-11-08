@@ -27,7 +27,8 @@ export function InvestigationMission() {
     const correct = !!selected?.correct
     const accuracy = correct ? 100 : 45
     const score = correct ? 920 : 420
-    nav(`/mission/${m.id}/results`, { state: { choice, correct, accuracy, score, collectedCount: m.evidence.length } })
+    const completionId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    nav(`/mission/${m.id}/results`, { state: { completionId, choice, correct, accuracy, score, collectedCount: m.evidence.length } })
   }
 
   return (

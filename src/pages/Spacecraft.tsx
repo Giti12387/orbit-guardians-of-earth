@@ -7,10 +7,13 @@ import { Button } from '../components/ui/Button'
 import { ProgressBar } from '../components/ui/Progress'
 import { spacecraftCatalog, solarBodies } from '../data/catalog'
 import { loadState, saveState, unlockAchievement } from '../store/gameStore'
+import { useSettings, prefersReducedMotion } from '../lib/settings'
 
 type Phase = 'select' | 'launch' | 'travel' | 'arrival'
 
 export function Spacecraft() {
+  const { settings } = useSettings()
+  const reduceMotion = prefersReducedMotion(settings)
   const [craft, setCraft] = useState(spacecraftCatalog[0].id)
   const [target, setTarget] = useState('earth')
   const [phase, setPhase] = useState<Phase>('select')
@@ -71,7 +74,7 @@ export function Spacecraft() {
                 <div className="rounded-xl border border-white/8 bg-white/3 p-3"><div className="hud-label">Fuel</div><div className="mt-2 font-[Orbitron] text-amber">{Math.round(fuel)}%</div></div>
                 <div className="rounded-xl border border-white/8 bg-white/3 p-3"><div className="hud-label">Target</div><div className="mt-2 flex items-center gap-2 font-semibold"><Target size={15} className="text-cyan"/> {targetBody.name}</div></div>
               </div>
-              <motion.div className="mt-6 rounded-2xl border border-cyan/20 bg-[linear-gradient(180deg,rgba(0,217,255,0.05),rgba(8,22,43,0.35))] p-5" animate={phase === 'launch' || phase === 'travel' ? { y: [0, -4, 0] } : { y: 0 }} transition={{ repeat: phase === 'arrival' ? 0 : Infinity, duration: 1.8 }}>
+              <motion.div className="mt-6 rounded-2xl border border-cyan/20 bg-[linear-gradient(180deg,rgba(0,217,255,0.05),rgba(8,22,43,0.35))] p-5" animate={!reduceMotion && (phase === 'launch' || phase === 'travel') ? { y: [0, -4, 0] } : { y: 0 }} transition={!reduceMotion && phase !== 'arrival' ? { repeat: Infinity, duration: 1.8 } : { duration: 0 }}>
                 <div className="flex items-center gap-3"><Navigation className="text-cyan" /><div><div className="font-[Space_Grotesk] text-xl font-semibold">{selectedCraft.name}</div><div className="text-sm text-text-muted">{phase === 'select' ? 'Ready on launch platform.' : phase === 'launch' ? 'Launch sequence active.' : phase === 'travel' ? `En route to ${targetBody.name}.` : `Arrival confirmed at ${targetBody.name}. Discovery logged.`}</div></div></div>
                 {(phase === 'launch' || phase === 'travel') && <div className="mt-4"><div className="mb-1 flex justify-between text-xs text-text-muted"><span>{phase === 'launch' ? 'Launch sequence' : 'Travel progress'}</span><span>{Math.round(progress)}%</span></div><ProgressBar value={progress} tone="cyan" /></div>}
               </motion.div>
